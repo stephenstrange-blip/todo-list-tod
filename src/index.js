@@ -1,10 +1,10 @@
 import "./css_reset.css";
 import "./styles.css";
-import { saveToDb, getUserList, checkUserExists } from "./db.js"
+import { saveToDb } from "./db.js"
 import { Project } from "./project.js";
 import { Todo } from "./todo.js";
 import { User } from "./user.js"
-
+import { Session } from "./ui.js";
 
 
 
@@ -16,6 +16,7 @@ let temp = [
                 title: "project1",
                 description: "desc",
                 dueDate: "09",
+                status: false,
                 todos: [
                     {
                         title: "title",
@@ -34,6 +35,7 @@ let temp = [
                 title: "project1",
                 description: "description",
                 dueDate: "dueDate",
+                status: true,
                 todos: [
                     {
                         title: "title",
@@ -54,8 +56,11 @@ let temp = [
 function test(clear = false) {
     if (clear) {
         localStorage.clear()
+        // const body = document.querySelector("body");
+        // body.textContent = "";
         return
     }
+    localStorage.clear()
     saveToDb({
         users: JSON.stringify(temp)
     })
@@ -78,15 +83,19 @@ function test(clear = false) {
     user1.addNewUserDb();
     project1.addNewProject("M");
     todo1.addNewTodo("M", "project1");
-
+    
     todo1.updateTodo("priority",3,"M","project1","todo1");
     project1.updateProject("desc","test project 2","M","project1");
     
     user1.updateUser("userName","N","M");
-    // let userList = JSON.parse(localStorage.getItem("users"));
-    // console.log(userList)
+    
+    let session1 = new Session();
+    session1.getCurrentUser("0");
+    session1.renderDOM();
+    let userList = JSON.parse(localStorage.getItem("users"));
+    console.log(userList)
 }
 test();
-let userList = JSON.parse(localStorage.getItem("users"));
-console.log(userList)
+// let userList = JSON.parse(localStorage.getItem("users"));
+// console.log(userList)
 

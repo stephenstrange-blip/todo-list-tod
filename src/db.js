@@ -13,6 +13,7 @@ function saveToDb(object) {
     }
 
 }
+
 function checkUserExists(name) {
     let userList = getUserList();
     if (!userList) {
@@ -27,6 +28,7 @@ function checkUserExists(name) {
 
     return false
 }
+
 function checkProjectExists(name, projectTitle) {
     let userList = getUserList();
     if (!userList || !checkUserExists(name)) {
@@ -84,7 +86,6 @@ function getUserList() {
     return JSON.parse(localStorage.getItem("users"));
 }
 
-
 function getUserIndex(name) {
     let userList = getUserList();
 
@@ -101,6 +102,7 @@ function getUserIndex(name) {
     console.error("Use not found!")
     return
 }
+
 function getProjectIndex(name, projectTitle) {
     let userList = getUserList();
 
@@ -124,6 +126,7 @@ function getProjectIndex(name, projectTitle) {
     return
 
 }
+
 function getTodoIndex(name, projectTitle, todoTitle) {
     let userList = getUserList();
 
@@ -189,7 +192,7 @@ function update(key, value, name, projectTitle, todoTitle) {
 
 }
 
-export { saveToDb, getUserList, checkUserExists, update, checkProjectExists }
+export { saveToDb, getUserList, checkUserExists, update, checkProjectExists, getUserIndex }
 
 
 
