@@ -81,16 +81,16 @@ function test(clear = false) {
         "Good Luck"
     )
     user1.addNewUserDb();
-    project1.addNewProject("M");
-    todo1.addNewTodo("M", "project1");
+    user1.addNewProject(project1.getProject());
+    user1.addNewTodo(project1.getProject()["title"], todo1.getTodo());
     
-    todo1.updateTodo("priority",3,"M","project1","todo1");
-    project1.updateProject("desc","test project 2","M","project1");
+    user1.updateTodo("priority",3,"project1",todo1.getTodo()["title"]);
+    user1.updateProject("desc","test project 2",project1.getProject()["title"]);
     
     user1.updateUser("userName","N","M");
     
     let session1 = new Session();
-    session1.getCurrentUser("0");
+    session1.getCurrentUser("N");
     session1.renderDOM();
     let userList = JSON.parse(localStorage.getItem("users"));
     console.log(userList)
