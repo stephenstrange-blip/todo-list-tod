@@ -26,9 +26,36 @@ export class Session {
         body.append(fragment);
     };
 
-    renderContent(refresh = false){
+    renderContent() {
         const content = document.createElement("div");
-        const project = document.createElement("div");
+        content.classList.add("content", "project-view")
+        let projectList = this.#currentUser["projects"];
+        for (let project of projectList) {
+            let temp = this.renderProject(project);
+            content.append(temp);
+        }
+        return content;
+    }
+    renderProject(project, refresh = false) {
+        if (refresh) {
+            const oldProjectTitle = document.querySelector(`.title[data-identifier=${project[title]}]`);
+            const oldProjectDesc = document.querySelector(`.desc[data-identifier=${project[title]}]`);
+            const oldProjectDue = document.querySelector(`.dueDate[data-identifier=${project[title]}]`);
+            const oldProjectStatus = document.querySelector(`status[data-identifier=${project[title]}]`);
+            const oldTodoPeek = document.querySelector(`.todo-peek[data-identifier=${project[title]}]`);
+
+            oldProjectTitle.textContent = project["title"];
+            oldProjectDesc.textContent = project["description"];
+            oldProjectDue.textContent = project["dueDate"];
+            oldProjectStatus.textContent = project["status"] === true ? "Complete" : "Incomplete";
+
+            const todoList = project["todos"];
+            const todoTitles = todoList === undefined ? "" : todoList.map(todo => todo["title"]);
+            oldTodoPeek.textContent = todoTitles === "" ? "" : todoTitles.join(`:\n`);
+            return
+        }
+
+        const projectCard = document.createElement("div");
         const projectTitle = document.createElement("div");
         const projectDesc = document.createElement("div");
         const projectDue = document.createElement("div");
@@ -38,13 +65,19 @@ export class Session {
 
         const expandIconHolder = document.createElement("img");
         const dueHolder = document.createElement("p");
-        const statusHolder = document.createElement("p");
 
-        const todoList = this.#currentUser["projects"][0]["todos"];
-        const todoTitles = todoList.map(todo => todo["title"])
+        const todoList = project["todos"];
+        const todoTitles = todoList === undefined ? "" : todoList.map(todo => todo["title"])
 
-        content.className = "content";
-        project.className = "project";
+        projectCard.dataset.identifier = project["title"];
+        projectTitle.dataset.identifier = project["title"];
+        projectDesc.dataset.identifier = project["title"];;
+        projectDue.dataset.identifier = project["title"];
+        projectStatus.dataset.identifier = project["title"];;
+        todoPeek.dataset.identifier = project["title"];;
+        expand.dataset.identifier = project["title"];;
+
+        projectCard.className = "project";
         projectTitle.className = "title";
         projectDesc.className = "desc";
         projectDue.className = "dueDate";
@@ -52,25 +85,22 @@ export class Session {
         todoPeek.className = "todo-peek";
         expand.className = "expand";
 
-        projectTitle.textContent = this.#currentUser["projects"][0]["title"];
-        projectDesc.textContent = this.#currentUser["projects"][0]["description"];
+        projectTitle.textContent = project["title"];
+        projectDesc.textContent = project["description"];
         projectDue.textContent = "Due on:"
-        dueHolder.textContent = this.#currentUser["projects"][0]["dueDate"];
-        projectStatus.textContent = "Progress: ";
-        statusHolder.textContent = this.#currentUser["projects"][0]["status"] === true ? "Complete" : "Incomplete"
-        todoPeek.textContent = todoTitles.join(":\n");
+        dueHolder.textContent = project["dueDate"];
+        projectStatus.textContent = project["status"] === true ? "Complete" : "Incomplete"
+        todoPeek.textContent = todoTitles === "" ? "" : todoTitles.join(`:\n`);
         expandIconHolder.src = expandIcon;
 
         projectDue.append(dueHolder);
-        projectStatus.append(statusHolder);
         expand.append(expandIconHolder);
-        project.append(projectTitle, projectDesc, projectDue, projectStatus, todoPeek);
-        content.append(project);
+        projectCard.append(projectTitle, projectDesc, projectDue, projectStatus, todoPeek, expand);
 
-        return content;
+        return projectCard;
     }
 
-    renderHeader(refresh = false){
+    renderHeader() {
         const header = document.createElement("div");
         const headerTitle = document.createElement("div");
 
@@ -91,7 +121,13 @@ export class Session {
 
         return header;
     }
-    renderSidebar() {
+    renderSidebar(refresh = false) {
+        if (refresh) {
+            const oldUserName = document.querySelector(".user-name");
+            oldUserName.textContent = this.#currentUser["userName"];
+            return
+        }
+
         const sideBar = document.createElement("div");
         const userDiv = document.createElement("div");
         const userIcon = document.createElement("div");
@@ -125,5 +161,39 @@ export class Session {
         sideBar.append(userDiv, actions);
 
         return sideBar;
+    }
+
+    renderTodoList() {
+
+    }
+
+    handleActionHover() {
+        const titleParents = document.querySelectorAll(".todo-container > ul > li");
+        console.log(titleParents);
+
+        function show(e, mouseOut) {
+            let identifier = e.currentTarget.dataset.identifier;
+            let [add, remove, edit] = document.querySelectorAll(`li[data-identifier=${identifier}] > .todo-title ~ div`);
+            if (!mouseOut) {
+                add.style.opacity = .6;
+                remove.style.opacity = .6;
+                edit.style.opacity = .6;
+
+            } else {
+                add.style.opacity = 0;
+                remove.style.opacity = 0;
+                edit.style.opacity = 0;
+            }
+
+        }
+        for (let liElement of titleParents) {
+            // console.log(title)
+            liElement.addEventListener("mouseover", (e) => { show(e), false });
+            liElement.addEventListener("mouseout", (e) => { show(e, true) })
+        }
+    }
+
+    static startSession() {
+        renderIntro();
     }
 }
