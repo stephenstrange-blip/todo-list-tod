@@ -7,7 +7,9 @@ export class User {
 
     addNewUserDb() {
         let userList = getUserList();
-        if (checkUserExists(this.name) || !userList) {
+        if (!userList) 
+            return
+        if (checkUserExists(this.name)) {
             console.error(`checkUserExists = ${checkUserExists(this.name)} and userList = ${!userList}`);
             return
         }
@@ -23,13 +25,15 @@ export class User {
             return
         if (checkUserExists(name)) { 
             let oldValue = update(key, value, name) 
+            this.name = value;
             console.log(`Old value of User with key ${key} is ${oldValue} and replaced with ${value}`)
         };
+        
     }
     
     addNewProject(project) {
         let userList = getUserList();
-
+        console.log(userList)
         if (userList.length === 0 || !checkUserExists(this.name)) {
             console.error("User does not exist. Abort creating new project")
         }
@@ -59,7 +63,7 @@ export class User {
 
     addNewTodo(projectTitle, todo) {
         let userList = getUserList();
-
+        console.log(userList, this.name)
         if (userList.length === 0 || !checkUserExists(this.name)) {
             console.error("User does not exist. Abort adding new Todo")
         }

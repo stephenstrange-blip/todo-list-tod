@@ -6,13 +6,12 @@ export class Todo {
     priority;
     status;
     notes;
-    constructor(title, desc, dueDate, priority, status, notes) {
+    constructor(title, desc, dueDate, priority, status) {
         this.title = title;
         this.desc = desc;
         this.dueDate = dueDate;
         this.priority = priority;
         this.status = status;
-        this.notes = notes
     }
 
     getTodo() {
@@ -22,7 +21,6 @@ export class Todo {
             dueDate: this.dueDate,
             priority: this.priority,
             status: this.status,
-            notes: this.notes
         }
     }
 }
