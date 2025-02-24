@@ -22,7 +22,7 @@ function checkUserExists(name) {
     }
     let userMatch = userList.filter(user => user["userName"] === name)
     if (userMatch.length !== 0) {
-        // console.log(`There is a user match`)
+        console.log(`There is a user match`)
         return true
     }
 
@@ -99,7 +99,7 @@ function getUserIndex(name) {
         if (name === userName)
             return i;
     }
-    console.error("Use not found!")
+    console.error("User not found!")
     return
 }
 
@@ -192,7 +192,7 @@ function update(key, value, name, projectTitle, todoTitle) {
 
 }
 
-export { saveToDb, getUserList, checkUserExists, update, checkProjectExists, getUserIndex }
+export { saveToDb, getUserList, checkUserExists, update, checkProjectExists, getUserIndex, getTodoIndex, getProjectIndex }
 
 
 
