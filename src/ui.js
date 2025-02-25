@@ -1,4 +1,4 @@
-import { getUserList, getUserIndex, getProjectIndex, checkUserExists } from "./db";
+import { getUserList, getUserIndex, getProjectIndex, checkUserExists, getTodoIndex } from "./db";
 import expandIcon from "./assets/plus.svg"
 import removeIcon from "./assets/x-square.svg";
 import editIcon from "./assets/edit.svg";
@@ -186,8 +186,10 @@ export class Session {
 
         console.log(`ContentView is ${contentView}`)
         console.log(!contentView, contentView.length === 3);
-        if (!contentView || contentView.length === 3)
+
+        if (!contentView || contentView.length > 2)
             return
+
         console.log(contentView[1])
         content.classList.remove(contentView[1]);
         console.log(content.classList)
@@ -228,6 +230,7 @@ export class Session {
             const editImg = document.createElement("img");
 
             li.dataset.identifier = todo["title"];
+            li.dataset.identifier2 = projectTitle;
             todoTitle.className = "todo-title";
             remove.className = "remove";
             edit.className = "edit";
@@ -305,9 +308,12 @@ export class Session {
             }
         }
         for (let liElement of titleParents) {
-            console.log(liElement)
+            let [title, edit, remove] = liElement.childNodes;
+
             liElement.addEventListener("mouseover", (e) => { show(e, false) });
             liElement.addEventListener("mouseout", (e) => { show(e, true) });
+            // edit.addEventListener("click", (e) => { this.expandTodo(e, false, title) })
+            remove.addEventListener("click", () => { this.createConfirmDialog(false, true) })
         }
 
         const returnBtns = document.querySelectorAll("#previous, #add");
@@ -390,21 +396,21 @@ export class Session {
         }
 
     }
-     removeDialog() {
+    removeDialog() {
         const content = document.querySelector(".content");
         const dialog = document.querySelectorAll("dialog:not([id=confirm-dialog");
         const confirmDialog = document.querySelectorAll("dialog#confirm-dialog");
         console.log(dialog, confirmDialog)
 
-        if (confirmDialog && confirmDialog.length > 0){
-            for (let i = 0; i < confirmDialog.length; i++){
+        if (confirmDialog && confirmDialog.length > 0) {
+            for (let i = 0; i < confirmDialog.length; i++) {
                 content.removeChild(confirmDialog[i])
             }
             console.log("Confirm Dialogs removed. Ready to add new Dialogs");
         }
-           
-        if (dialog && dialog.length > 0){
-            for (let i = 0; i < confirmDialog.length; i++){
+
+        if (dialog && dialog.length > 0) {
+            for (let i = 0; i < confirmDialog.length; i++) {
                 content.removeChild(dialog[i])
             }
             console.log("Dialogs removed. Ready to add new Dialogs");
@@ -421,7 +427,7 @@ export class Session {
         const confirmDialog = document.getElementById("confirm-dialog");
         const confirmBtn = document.getElementById("confirm-option");
         const confirmCancel = document.getElementById("cancel-confirm");
-        
+
         const inputs = dialog.querySelectorAll("dialog:not([id=confirm-dialog]) > form > p > input");
         const returnValue = {};
 
@@ -472,7 +478,7 @@ export class Session {
         })
     }
 
-    createConfirmDialog(newTodo = false) {
+    createConfirmDialog(newTodo = false, removeTodo = false) {
         const content = document.querySelector(".content");
         const dialog = document.createElement("dialog");
         const form = document.createElement("form");
@@ -488,6 +494,8 @@ export class Session {
 
         if (newTodo)
             confirmMessage.textContent = "Confirm adding new todo?";
+        else if (removeTodo)
+            confirmMessage.textContent = "Confirm removing todo?"
         else
             confirmMessage.textContent = "Confirm creating new project?"
 
@@ -609,9 +617,49 @@ export class Session {
             pPriority.append(priorityInput, priorityLabel);
             form.insertBefore(pPriority, pDueDate);
         }
-
         dialog.append(form);
         content.append(dialog);
     }
+    expandTodo(e, refresh = false, projectIdentifier = "") {
+        content.classList.add("todo-edit");
+        const project = e.currentTarget === undefined ? projectIdentifier : e.currentTarget.dataset.identifier2;
+        const todoIdentifier = e.currentTarget === undefined ? projectIdentifier : e.currentTarget.dataset.identifier;
+        const [projectIndex, todoIndex] = getTodoIndex(this.#currentUser["userName"], project, todoIdentifier).slice(1);
+        const todo = this.#currentUser["projects"][projectIndex]["todos"][todoIndex];
+        console.log(todo);
 
+        const content = document.querySelector(".content");
+        const todoTitle = document.createElement("div");
+        const todoPriority = document.createElement("div");
+        const todoContainer = document.createElement("div");
+        const todoDesc = document.createElement("div");
+        const todoDue = document.createElement("div");
+        
+        const prevBtn = document.createElement("button");
+        const prevImg = document.createElement("img");
+
+        const switchLabel = document.createElement("label");
+        const status = document.createElement("input");
+        const slider = document.createElement("span");
+
+        if (refresh) {
+            console.log(`content is being refreshed`)
+            content.textContent = "";
+        }
+        else this.switchView();
+
+        const editAction = document.createElement("div");
+        const editImg = document.createElement("img");
+
+        todoContainer.className = "todo-container";
+        todoTitle.className = "todo-title";
+        todoPriority.className = "priority";
+        todoDesc.className = "todo-description";
+        
+        todoTitle.textContent = todo["title"];
+        todoPriority.textContent = todo["priority"];
+        todoDesc.textContent = todo["description"];
+
+        
+    }
 }
