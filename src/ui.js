@@ -13,11 +13,13 @@ export class Session {
     }
     getCurrentUser(name) {
         this.name = name;
+        console.log(this.name)
         let userList = getUserList();
         if (checkUserExists(this.name)) {
             let userIndex = getUserIndex(this.name);
             this.#currentUser = userList[userIndex];
-        } else {
+        } else if (this.#userClass) {
+            this.#userClass.name = "User";
             let userIndex = getUserIndex("User");
             this.#currentUser = userList[userIndex];
         }
@@ -60,24 +62,8 @@ export class Session {
 
         return content;
     }
-    renderProject(project, refresh = false) {
-        if (refresh) {
-            const oldProjectTitle = document.querySelector(`.title[data-identifier=${project[title]}]`);
-            const oldProjectDesc = document.querySelector(`.desc[data-identifier=${project[title]}]`);
-            const oldProjectDue = document.querySelector(`.dueDate[data-identifier=${project[title]}]`);
-            const oldProjectStatus = document.querySelector(`status[data-identifier=${project[title]}]`);
-            const oldTodoPeek = document.querySelector(`.todo-peek[data-identifier=${project[title]}]`);
-
-            oldProjectTitle.textContent = project["title"];
-            oldProjectDesc.textContent = project["description"];
-            oldProjectDue.textContent = project["dueDate"];
-            oldProjectStatus.textContent = project["status"] === true ? "Complete" : "Incomplete";
-
-            const todoList = project["todos"];
-            const todoTitles = todoList === undefined ? "" : todoList.map(todo => todo["title"]);
-            oldTodoPeek.textContent = todoTitles === "" ? "" : todoTitles.join(`:\n`);
-            return
-        }
+    renderProject(project) {
+        console.log(project)
 
         const projectCard = document.createElement("div");
         const projectTitle = document.createElement("div");
@@ -145,6 +131,7 @@ export class Session {
 
         return header;
     }
+
     renderSidebar(refresh = false) {
         if (refresh) {
             const oldUserName = document.querySelector(".user-name");
@@ -194,21 +181,25 @@ export class Session {
 
     switchView() {
         const content = document.querySelector(".content");
-        const currentView = content.classList[1];
+        const contentView = content.classList;
+        const currentView = contentView[1]
 
-        console.log(`CurrentView is ${currentView}`)
-        if (!currentView)
+        console.log(`ContentView is ${contentView}`)
+        console.log(!contentView, contentView.length === 3);
+        if (!contentView || contentView.length === 3)
             return
-
-        content.classList.remove(currentView);
+        console.log(contentView[1])
+        content.classList.remove(contentView[1]);
+        console.log(content.classList)
         content.classList.add(currentView === "project-view" ? "todo-view" : "project-view")
+        console.log(content.classList)
     }
 
     expandProject(e, refresh = false, projectIdentifier = "") {
         let projectTitle = e.currentTarget === undefined ? projectIdentifier : e.currentTarget.dataset.identifier;
         const projectIndex = getProjectIndex(this.#currentUser["userName"], projectTitle)[1];
         const todoList = this.#currentUser["projects"][projectIndex]["todos"];
-
+        console.log(todoList)
         const content = document.querySelector(".content");
         const todoContainer = document.createElement("div");
         const projectDesc = document.createElement("div");
@@ -222,6 +213,7 @@ export class Session {
         const addImg = document.createElement("img");
 
         if (refresh) {
+            console.log(`content is being refreshed`)
             content.textContent = "";
         }
         else this.switchView();
@@ -284,7 +276,6 @@ export class Session {
         prevBtn.append(prevImg);
         addBtn.append(addImg);
         projectActions.append(addBtn, prevBtn);
-
         title.append(projectActions)
 
         todoContainer.append(ul);
@@ -377,46 +368,73 @@ export class Session {
             this.removeDialog();
             this.createDialog(newTodo);
             this.createConfirmDialog(newTodo);
-            this.handleDialog();
-            const dialog = document.querySelector("dialog:not([class=confirm-dialog");
+            this.handleDialog(newTodo);
+            const dialog = document.querySelector("dialog:not([id=confirm-dialog");
             dialog.showModal();
         }
         if (addBtn) {
             console.log("adding event listeners to add new todos")
             addBtn.addEventListener("click", (e) => {
                 initiateDialog(e, true);
+                const content = document.querySelector(".content");
+                content.classList.add("dialog-open");
             })
-            return;
         }
         if (create) {
             console.log("adding event listeners to create new projects")
             create.addEventListener("click", (e) => {
                 initiateDialog(e);
+                const content = document.querySelector(".content");
+                content.classList.add("dialog-open");
             })
-            return
         }
 
     }
-    removeDialog() {
+     removeDialog() {
         const content = document.querySelector(".content");
-        const dialog = document.querySelector("dialog:not([class=confirm-dialog");
-        const confirmDialog = document.querySelector("dialog.confirm-dialog");
+        const dialog = document.querySelectorAll("dialog:not([id=confirm-dialog");
+        const confirmDialog = document.querySelectorAll("dialog#confirm-dialog");
+        console.log(dialog, confirmDialog)
 
-        if (!dialog && !confirmDialog)
-            return
-
-        content.removeChild(confirmDialog);
-        content.removeChild(dialog);
-        console.log("Dialogs removed. Ready to add new Dialogs");
+        if (confirmDialog && confirmDialog.length > 0){
+            for (let i = 0; i < confirmDialog.length; i++){
+                content.removeChild(confirmDialog[i])
+            }
+            console.log("Confirm Dialogs removed. Ready to add new Dialogs");
+        }
+           
+        if (dialog && dialog.length > 0){
+            for (let i = 0; i < confirmDialog.length; i++){
+                content.removeChild(dialog[i])
+            }
+            console.log("Dialogs removed. Ready to add new Dialogs");
+        }
+        console.log(content.childNodes);
+        content.classList.remove("dialog-open");
+        console.log(content.childNodes);
     }
 
-    handleDialog() {
+    handleDialog(newTodo = false) {
         const dialog = document.querySelector("dialog");
+        const submitBtn = document.getElementById("submit");
+        const cancel = document.getElementById("cancel");
         const confirmDialog = document.getElementById("confirm-dialog");
         const confirmBtn = document.getElementById("confirm-option");
-        const submitBtn = document.querySelector("#submit");
-        const inputs = dialog.querySelectorAll("dialog:not([class=confirm-dialog]) > form > p > input");
+        const confirmCancel = document.getElementById("cancel-confirm");
+        
+        const inputs = dialog.querySelectorAll("dialog:not([id=confirm-dialog]) > form > p > input");
         const returnValue = {};
+
+        dialog.addEventListener("close", () => {
+            this.removeDialog();
+        })
+        cancel.addEventListener("click", () => {
+            dialog.close();
+            this.removeDialog();
+        })
+        confirmCancel.addEventListener("click", (e) => {
+            confirmDialog.close();
+        })
 
         submitBtn.addEventListener("click", (e) => {
             e.preventDefault();
@@ -427,17 +445,28 @@ export class Session {
             e.preventDefault();
             e.stopPropagation();
             inputs.forEach((input) => {
+                if (input.name == "priority")
+                    returnValue[input.name] = parseInt(input.value)
                 returnValue[input.name] = input.value;
             })
             returnValue["status"] = false;
 
             let userName = this.#currentUser["userName"];
-            console.log(dialog.dataset.identifier, returnValue);
-            this.#userClass.addNewTodo(dialog.dataset.identifier, returnValue);
-            this.expandProject("", true, dialog.dataset.identifier);
-            this.getCurrentUser(userName);
-            this.previous();
-            this.add();
+            if (newTodo) {
+                this.#userClass.addNewTodo(dialog.dataset.identifier, returnValue);
+                this.getCurrentUser(userName);
+                this.expandProject("", true, dialog.dataset.identifier);
+                this.previous();
+                this.add();
+            }
+            else {
+                console.log("adding new project...")
+                returnValue["todos"] = [];
+                this.#userClass.addNewProject(returnValue);
+                this.getCurrentUser(userName);
+                this.renderContent(true);
+                this.expand();
+            }
             confirmDialog.close();
             dialog.close();
         })
@@ -454,6 +483,7 @@ export class Session {
         dialog.id = "confirm-dialog";
         confirmOption.id = "confirm-option"
         confirmOption.textContent = "Confirm";
+        cancelOption.id = "cancel-confirm";
         cancelOption.textContent = "Cancel";
 
         if (newTodo)
@@ -508,7 +538,7 @@ export class Session {
             name: "description",
             type: "text",
             required: "true",
-            placeholder: "Do something with someone",
+            placeholder: newTodo === true ? "Do something with someone" : "What is your project's ultimate goal?",
             maxLength: 50,
             minLength: 1,
         })
@@ -539,11 +569,11 @@ export class Session {
         })
         Object.assign(descriptionLabel, {
             for: "desc",
-            textContent: "Describe your Todo"
+            textContent: newTodo === true ? "Describe your Todo" : "Describe your Project"
         })
         Object.assign(dueDateLabel, {
             for: "dueDate",
-            textContent: "When is it due?"
+            textContent: newTodo === true ? "When is it due?" : "When do you plan to finish all TODOs?"
         })
 
 
@@ -584,7 +614,4 @@ export class Session {
         content.append(dialog);
     }
 
-    static startSession() {
-        renderIntro();
-    }
 }
