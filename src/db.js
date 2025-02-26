@@ -100,7 +100,7 @@ function getUserIndex(name) {
             return i;
     }
     console.error("User not found!")
-    return
+    return [0]
 }
 
 function getProjectIndex(name, projectTitle) {
@@ -123,7 +123,7 @@ function getProjectIndex(name, projectTitle) {
         }
     }
     console.error("User/Project not found!")
-    return
+    return [0, 0]
 
 }
 
@@ -153,7 +153,7 @@ function getTodoIndex(name, projectTitle, todoTitle) {
         }
     }
     console.error("User/Project/Todo not found!")
-    return
+    return [0, 0, 0]
 }
 
 function update(key, value, name, projectTitle, todoTitle) {
