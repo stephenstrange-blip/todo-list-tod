@@ -182,7 +182,7 @@ export class Session {
     switchView() {
         const content = document.querySelector(".content");
         const contentView = content.classList;
-        const currentView = contentView[1]
+        const currentView = contentView[1];
 
         console.log(`ContentView is ${contentView}`)
         console.log(!contentView, contentView.length === 3);
@@ -201,7 +201,6 @@ export class Session {
         let projectTitle = e.currentTarget === undefined ? projectIdentifier : e.currentTarget.dataset.identifier;
         const projectIndex = getProjectIndex(this.#currentUser["userName"], projectTitle)[1];
         const todoList = this.#currentUser["projects"][projectIndex]["todos"];
-        console.log(todoList)
         const content = document.querySelector(".content");
         const todoContainer = document.createElement("div");
         const projectDesc = document.createElement("div");
@@ -289,35 +288,53 @@ export class Session {
 
     hover() {
         const titleParents = document.querySelectorAll(".todo-container > ul > li");
-        console.log(titleParents.length);
-
         if (!titleParents)
             return
 
         function show(e, mouseOut) {
             e.stopPropagation();
-            let identifier = e.currentTarget.dataset.identifier;
-            let [edit, remove] = document.querySelectorAll(`li[data-identifier=${identifier}] > .todo-title ~ div`);
+            let [title, edit, remove] = e.currentTarget.childNodes;
             if (!mouseOut) {
-                remove.style.opacity = .6;
+                if (remove)
+                    remove.style.opacity = .6;
                 edit.style.opacity = .6;
 
             } else {
-                remove.style.opacity = 0;
+                if (remove)
+                    remove.style.opacity = 0;
                 edit.style.opacity = 0;
             }
         }
         for (let liElement of titleParents) {
-            let [title, edit, remove] = liElement.childNodes;
-
+            if (liElement.childNodes[0].className === "switch")
+                return
             liElement.addEventListener("mouseover", (e) => { show(e, false) });
             liElement.addEventListener("mouseout", (e) => { show(e, true) });
-            // edit.addEventListener("click", (e) => { this.expandTodo(e, false, title) })
-            remove.addEventListener("click", () => { this.createConfirmDialog(false, true) })
+
+            if (liElement.className === "") {
+                let [title, edit, remove] = liElement.childNodes;
+                edit.addEventListener("click", (e) => {
+                    e.stopImmediatePropagation();
+                    e.stopPropagation();
+                    this.expandTodo(e, true, liElement.dataset);
+                    this.hover();
+                    this.previous(liElement)
+                })
+                remove.addEventListener("click", () => { this.createConfirmDialog(false, true) })
+            } else {
+                let edit = liElement.childNodes[1];
+                edit.addEventListener("click", (e) => {
+                    this.removeDialog();
+                    this.createUpdateDialog(e);
+                    this.createConfirmDialog(false, false, true);
+                    this.handleUpdateDialog();
+                    const updateDialog = document.querySelector(".update-dialog");
+                    updateDialog.showModal();
+                })
+            }
         }
 
         const returnBtns = document.querySelectorAll("#previous, #add");
-        console.log(returnBtns)
         if (!returnBtns)
             return
 
@@ -338,6 +355,83 @@ export class Session {
 
     }
 
+    createUpdateDialog(e) {
+        const sibling = e.currentTarget.previousSibling;
+        const key = sibling.className.split("-")[1]
+        console.log(`Sibling:`, sibling, key)
+
+        const content = document.querySelector(".content");
+        const dialog = document.createElement("dialog");
+        const form = document.createElement("form");
+        const label = document.createElement("label");
+        const input = document.createElement("input");
+        const submit = document.createElement("button");
+        const cancel = document.createElement("button");
+
+        dialog.className = "update-dialog";
+        submit.className = "update-submit";
+        cancel.className = "update-cancel";
+
+        label.for = "update-input";
+        label.textContent = `New value for ${key.toUpperCase()}`;
+        input.id = "update-input";
+        input.dataset.key = key;
+        input.required = true;
+        input.name = "input";
+        submit.type = "submit";
+        submit.id = "submit-update";
+        submit.textContent = "Submit";
+        cancel.textContent = "Cancel";
+        cancel.formmethod = "dialog";
+        cancel.id = "cancel-update";
+
+        form.append(label, input, submit, cancel);
+        dialog.append(form);
+        content.append(dialog);
+    }
+
+    handleUpdateDialog() {
+        const confirmDialog = document.querySelector("#confirm-dialog");
+        const updateDialog = document.querySelector(".update-dialog");
+        const submitBtn = document.querySelector(".update-submit");
+        const confirmBtn = document.querySelector("#confirm-option");
+        const cancelBtn = document.querySelector(".update-cancel");
+        const cancelConfirm = document.querySelector("#cancel-confirm");
+        const input = document.querySelector("#update-input");
+        const li = document.querySelector(".expand-todo");
+        const [projectIndex, todoIndex] = getTodoIndex(this.#currentUser["userName"], li.dataset.identifier2, li.dataset.identifier).slice(1);
+        cancelConfirm.addEventListener("click", () => {
+            confirmDialog.close();
+        })
+        confirmBtn.addEventListener("click", () => {
+            let userName = this.#currentUser["userName"];
+            console.log(input.dataset.key, input.value, li.dataset.identifier2, li.dataset.identifier)
+            this.#userClass.updateTodo(
+                input.dataset.key,
+                input.value,
+                li.dataset.identifier2,
+                li.dataset.identifier);
+            confirmDialog.close();
+            updateDialog.close();
+            this.removeDialog();
+            this.getCurrentUser(userName);
+            let todoName = this.#currentUser["projects"][projectIndex]["todos"][todoIndex]["title"];
+            let projectName = this.#currentUser["projects"][projectIndex]["title"];
+            this.expandTodo("", true, {identifier: todoName, identifier2: projectName });
+            this.hover();
+            this.previous(li);
+        })
+
+        cancelBtn.addEventListener("click", (e) => {
+            updateDialog.close();
+        })
+        submitBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            confirmDialog.showModal();
+        })
+
+    }
+
     expand() {
         const expandButtons = document.querySelectorAll(".expand");
         console.log(expandButtons)
@@ -353,21 +447,26 @@ export class Session {
         }
     }
 
-    previous() {
+    previous(element) {
         const previousBtn = document.querySelector("#previous");
         if (!previousBtn)
             return
+
         previousBtn.addEventListener("click", () => {
-            let content = this.renderContent(true);
-            let bodyContainer = document.querySelector(".body-container");
-            bodyContainer.append(content);
-            this.expand()
+            if (element) {
+                this.expandProject(element, true, element.dataset.identifier2);
+
+            } else {
+                let content = this.renderContent(true);
+                let bodyContainer = document.querySelector(".body-container");
+                bodyContainer.append(content);
+                this.expand()
+            }
         })
     }
     add() {
         const addBtn = document.querySelector("#add");
         const create = document.querySelector(".sidebar-actions > a:first-of-type");
-        // console.log(create, `this is create`, addBtn, `this is add`)
         const initiateDialog = (event, newTodo = false) => {
             event.preventDefault();
             event.stopPropagation();
@@ -389,6 +488,7 @@ export class Session {
         if (create) {
             console.log("adding event listeners to create new projects")
             create.addEventListener("click", (e) => {
+                // todoTitle, todoPriority, todoDesc, todoDue
                 initiateDialog(e);
                 const content = document.querySelector(".content");
                 content.classList.add("dialog-open");
@@ -478,7 +578,7 @@ export class Session {
         })
     }
 
-    createConfirmDialog(newTodo = false, removeTodo = false) {
+    createConfirmDialog(newTodo = false, removeTodo = false, updateTodo = false) {
         const content = document.querySelector(".content");
         const dialog = document.createElement("dialog");
         const form = document.createElement("form");
@@ -495,14 +595,15 @@ export class Session {
         if (newTodo)
             confirmMessage.textContent = "Confirm adding new todo?";
         else if (removeTodo)
-            confirmMessage.textContent = "Confirm removing todo?"
+            confirmMessage.textContent = "Confirm removing todo?";
+        else if (updateTodo)
+            confirmMessage.textContent = "Confirm updating todo";
         else
             confirmMessage.textContent = "Confirm creating new project?"
 
         form.append(confirmMessage, confirmOption, cancelOption);
         dialog.append(form);
         content.append(dialog);
-
     }
 
     createDialog(newTodo = false) {
@@ -558,8 +659,6 @@ export class Session {
             maxLength: 25,
             minLength: 1,
         })
-
-
         Object.assign(cancel, {
             id: "cancel",
             formmethod: "dialog",
@@ -583,7 +682,6 @@ export class Session {
             for: "dueDate",
             textContent: newTodo === true ? "When is it due?" : "When do you plan to finish all TODOs?"
         })
-
 
         titleLabel.setAttribute("for", "title");
         descriptionLabel.setAttribute("for", "desc");
@@ -617,30 +715,36 @@ export class Session {
             pPriority.append(priorityInput, priorityLabel);
             form.insertBefore(pPriority, pDueDate);
         }
-        dialog.append(form);
+        dialog.append(form); expandTodo
         content.append(dialog);
     }
     expandTodo(e, refresh = false, projectIdentifier = "") {
-        content.classList.add("todo-edit");
-        const project = e.currentTarget === undefined ? projectIdentifier : e.currentTarget.dataset.identifier2;
-        const todoIdentifier = e.currentTarget === undefined ? projectIdentifier : e.currentTarget.dataset.identifier;
+        const parentIdentifier = !!e.currentTarget ? e.currentTarget.parentNode.dataset : undefined
+        const project = !parentIdentifier ? projectIdentifier.identifier2 : parentIdentifier.identifier2;
+        const todoIdentifier = !parentIdentifier ? projectIdentifier.identifier : parentIdentifier.identifier;
+        console.log(this.#currentUser["userName"], project, todoIdentifier);
         const [projectIndex, todoIndex] = getTodoIndex(this.#currentUser["userName"], project, todoIdentifier).slice(1);
         const todo = this.#currentUser["projects"][projectIndex]["todos"][todoIndex];
         console.log(todo);
 
         const content = document.querySelector(".content");
+        const todoContainer = document.createElement("div");
         const todoTitle = document.createElement("div");
         const todoPriority = document.createElement("div");
-        const todoContainer = document.createElement("div");
         const todoDesc = document.createElement("div");
         const todoDue = document.createElement("div");
-        
-        const prevBtn = document.createElement("button");
-        const prevImg = document.createElement("img");
+
+        const pDue = document.createElement("p");
+        const pPriority = document.createElement("p");
 
         const switchLabel = document.createElement("label");
         const status = document.createElement("input");
         const slider = document.createElement("span");
+
+        const returnDiv = document.createElement("div");
+        const previousBtn = document.createElement("button");
+        const previousImg = document.createElement("img");
+        const ul = document.createElement("ul");
 
         if (refresh) {
             console.log(`content is being refreshed`)
@@ -648,18 +752,61 @@ export class Session {
         }
         else this.switchView();
 
-        const editAction = document.createElement("div");
-        const editImg = document.createElement("img");
-
         todoContainer.className = "todo-container";
         todoTitle.className = "todo-title";
-        todoPriority.className = "priority";
+        todoPriority.className = "todo-priority";
         todoDesc.className = "todo-description";
-        
-        todoTitle.textContent = todo["title"];
-        todoPriority.textContent = todo["priority"];
-        todoDesc.textContent = todo["description"];
+        todoDue.className = "todo-dueDate"
 
-        
+        switchLabel.className = "switch";
+        status.type = "checkbox";
+        slider.className = "slider";
+
+        returnDiv.className = "return";
+        previousImg.src = previousIcon;
+        Object.assign(previousBtn, {
+            type: "button",
+            id: "previous"
+        })
+
+        todoTitle.textContent = todo["title"];
+        todoDesc.textContent = todo["description"];
+        todoPriority.textContent = "Priority:";
+        todoDue.textContent = "Due on:"
+        pDue.textContent = todo["dueDate"];
+        pPriority.textContent = todo["priority"];
+
+        todoPriority.append(pPriority);
+        todoDue.append(pDue);
+        switchLabel.append(status, slider);
+        previousBtn.append(previousImg);
+        returnDiv.append(previousBtn);
+
+        const arr = [todoTitle, todoDesc, todoPriority, todoDue, switchLabel]
+
+        for (let element of arr) {
+            const li = document.createElement("li");
+            li.className = "expand-todo";
+            li.dataset.identifier = todoIdentifier;
+            li.dataset.identifier2 = project
+
+            if (element.textContent === todo["title"]) {
+                element.append(returnDiv);
+            }
+
+            const editAction = document.createElement("div");
+            const editImg = document.createElement("img");
+            editAction.className = "edit";
+            editImg.src = editIcon;
+            editAction.append(editImg);
+
+            li.append(element, editAction),
+                ul.append(li);
+        }
+        todoContainer.append(ul);
+        content.append(todoContainer);
+        content.classList.add("todo-edit");
     }
+
+
 }
