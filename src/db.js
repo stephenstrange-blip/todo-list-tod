@@ -39,7 +39,7 @@ function checkProjectExists(name, projectTitle) {
     for (let i = 0; i < userList.length; i++) {
         let userName = userList[i]["userName"];
         if (name === userName) {
-            let projectList = userList[i]["projects"];
+            let projectList = userList[i]["projects"];       
             let projectMatch = projectList.filter(project => project["title"] === projectTitle);
             if (projectMatch.length !== 0) {
                 console.log(`There is a project match `, projectMatch)
@@ -140,6 +140,7 @@ function getTodoIndex(name, projectTitle, todoTitle) {
             let projectList = userList[i]["projects"];
             for (let j = 0; j < projectList.length; j++) {
                 let projectName = userList[i]["projects"][j]["title"];
+                console.log(`${projectName} === ${projectTitle}: ${projectName === projectTitle}`);
                 if (projectName === projectTitle) {
                     let todoList = userList[i]["projects"][j]["todos"];
                     for (let m = 0; m < todoList.length; m++) {
@@ -188,8 +189,6 @@ function update(key, value, name, projectTitle, todoTitle) {
         saveToDb({ users: JSON.stringify(userList) });
         return oldValue;
     }
-
-
 }
 
 export { saveToDb, getUserList, checkUserExists, update, checkProjectExists, getUserIndex, getTodoIndex, getProjectIndex }
