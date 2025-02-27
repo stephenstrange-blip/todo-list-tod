@@ -90,11 +90,10 @@ export class User {
 
     updateTodo(key, value, projectTitle, todoTitle) {
         if (!todoTitle) {
-            console.error(`!todoTitle is ${!todoTitle}`)
+            console.error(`!todoTitle is missing: ${!todoTitle}`)
             return;
         }
-        let checkPoint = checkProjectExists(this.name, projectTitle)
-        console.log(`Checkpoint is ${checkPoint}`)
+        let checkPoint = checkProjectExists(this.name, projectTitle);
         if (checkPoint) {
             let oldValue = update(key, value, this.name, projectTitle, todoTitle);
             console.log(`Old value of todo with key ${key} is ${oldValue} and replaced with ${value}`);
