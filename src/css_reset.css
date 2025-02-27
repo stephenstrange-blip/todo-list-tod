@@ -1,0 +1,107 @@
+/*
+  Josh's Custom CSS Reset
+  https://www.joshwcomeau.com/css/custom-css-reset/
+
+  Matt Brictson
+  https://mattbrictson.com/blog/css-normalize-and-reset
+*/
+
+
+/* 1. Use a more-intuitive box-sizing model */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  /* from https://www.silocreativo.com/en/css-rescue-improving-ux-forms/ */
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+}
+
+/* 2. Remove default margin */
+* {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  /* 3. Add accessible line-height */
+  line-height: 1.5;
+  /* 4. Improve text rendering */
+  -webkit-font-smoothing: antialiased;
+}
+
+/* 5. Improve media defaults */
+img,
+picture,
+video,
+canvas,
+svg {
+  display: block;
+  /*if we want the image to be oversized, put max-width=revert in the styling of the specific img file.*/
+  max-width: 100%;
+  max-inline-size: 100%;
+}
+
+/* 6. Inherit fonts for form controls */
+input,
+button,
+textarea,
+select {
+  font: inherit;
+  outline: none;
+}
+
+/* 7. Avoid text overflows */
+p,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  overflow-wrap: break-word;
+}
+
+/*you can put hypens: auto in every p or h1 element to indicate hard wrapping (brea
+  king abruptly instead of soft 
+  wrapping which usually breaks on whitespaces and -*/
+
+
+/* 8. Improve line wrapping */
+p {
+  text-wrap: pretty;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-size: inherit;
+  font-weight: inherit;
+  text-wrap: balance;
+  /* use text-wrap: balance instead to ensure each line of text is roughly the same */
+}
+
+/*
+    9. Create a root stacking context
+  */
+#root,
+#__next {
+  isolation: isolate;
+}
+
+
+
+ol[role="list"], ul[role="list"] {
+  list-style: none;
+  padding-inline: 0;
+}
+
+
+.article :where(h1, h2, h3, h4, h5) {
+  all: revert;
+}
+/* Within an .article, headings are displayed using the original browser default styles, with appropriate font sizes and weights, thanks to revert.
+ */
